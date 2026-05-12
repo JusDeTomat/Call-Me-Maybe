@@ -3,6 +3,7 @@ import time
 from typing import Any
 import numpy as np
 import json
+from src.enum import Prompt
 from src.parsing import parsing
 from src.output import write_output
 from llm_sdk import Small_LLM_Model
@@ -36,8 +37,10 @@ class Model(BaseModel):
 
     def constrained_decoding(self, dico_promt, dico_fonction):
         self.lst_output = []
+        lst_type = []
         ids_number = self.create_autoris_key(set(",0123456789"))
-        ids_string = self.create_autoris_key(set(",0123456789abcdefghijklmnopqrstuvwxyz "))
+        ids_string = self.create_autoris_key(
+            set(",0123456789abcdefghijklmnopqrstuvwxyz "))
         name_fonction = self.model.encode(
             "".join(d.get("name") for d in dico_fonction)
         )[0].tolist()
@@ -46,31 +49,33 @@ class Model(BaseModel):
         for prom in dico_promt:
             i += 1
             text_encode = self.model.encode(
-                f"Select the function from {dico_fonction} to answer the input\n"
+                f"Select the function from {dico_fonction} to answer "
+                "the input\n"
                 f"input: {prom.get('prompt')}\n"
                 "output format: function:<function_name>\n"
                 "function: "
             )[0].tolist()
             anser = self.model.encode("function: ")[0].tolist()
-            anser, text_encode, fonction_name = self.research_fonc_name(text_encode, name_fonction, add_parmeter_str, anser)
+            (anser,
+             text_encode,
+             fonction_name) = self.research_fonc_name(text_encode,
+                                                      name_fonction,
+                                                      add_parmeter_str,
+                                                      anser)
             fonction_name_dec = self.model.decode(fonction_name)
-            lst_type, dico_fonction_chose = self.take_parm_fonction(fonction_name_dec, dico_fonction)
+            (lst_type,
+             dico_fonction_chose) = self.take_parm_fonction(fonction_name_dec,
+                                                            dico_fonction)
             text_encode_parm = self.model.encode(
-                f"This function {dico_fonction_chose} completes the parameters by responding to the input, your answer must be only the output line\n"
+                f"This function {dico_fonction_chose} completes the parameters"
+                " by responding to the input, your answer must be only the "
+                "output line\n"
                 f"input: {prom.get('prompt')}\n"
                 "output: parameters: <name>:<value>,\n"
                 "parameters:"
             )[0].tolist()
             print(
-                "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-                "\033[34m              _  _                                              _\033[0m\n"
-                "\033[34m             | || |                                            | |\033[0m\n"
-                "\033[34m  ___   __ _ | || |  _ __ ___    ___   _ __ ___    __ _  _   _ | |__    ___\033[0m\n"
-                "\033[34m / __| / _` || || | | '_ ` _ \\  / _ \\ | '_ ` _ \\  / _` || | | || '_ \\  / _ \\\033[0m\n"
-                "\033[34m| (__ | (_| || || | | | | | | ||  __/ | | | | | || (_| || |_| || |_) ||  __/\033[0m\n"
-                "\033[34m \\___| \\__,_||_||_| |_| |_| |_| \\___| |_| |_| |_| \\__,_| \\__, ||_.__/  \\___|\033[0m\n"
-                "\033[34m                                                          __/ |\033[0m\n"
-                "\033[34m                                                         |___/\033[0m\n"
+                f"{Prompt.LOGO.value}\n"
                 f"{i}/{len(dico_promt)}prompt\n"
                 f"---> prompt: {prom.get('prompt')}\n"
                 f"---> function name: {fonction_name_dec}:\n"
@@ -85,9 +90,17 @@ class Model(BaseModel):
                     print(self.model.decode(element), end="")
                 while (not end) and token <= 20:
                     if type_parm == "number":
-                        text_encode_parm, anser, best_id = self.take_best(text_encode_parm, anser, ids_number)
+                        (text_encode_parm,
+                         anser,
+                         best_id) = self.take_best(text_encode_parm,
+                                                   anser,
+                                                   ids_number)
                     if type_parm == "string":
-                        text_encode_parm, anser, best_id = self.take_best(text_encode_parm, anser, ids_string)
+                        (text_encode_parm,
+                         anser,
+                         best_id) = self.take_best(text_encode_parm,
+                                                   anser,
+                                                   ids_string)
                     best_id_str = self.model.decode(best_id)
                     print(best_id_str, end="", flush=True)
                     if ',' in best_id_str:
@@ -97,21 +110,32 @@ class Model(BaseModel):
             decode_anser = self.model.decode(anser)
             self.lst_output.append([prom.get('prompt'), decode_anser])
 
-    def take_parm_fonction(self, function_name, dico_fonction):
+    @staticmethod
+    def take_parm_fonction(function_name, dico_fonction):
         lst_type = []
         for d in dico_fonction:
             if d.get("name", "") == function_name:
                 param_name = d.get("parameters", d).keys()
                 for element in param_name:
-                    lst_type.append((element, d.get("parameters", d)[element].get("type", "")))
+                    lst_type.append(
+                        (element,
+                         d.get("parameters", d)[element].get("type", "")))
                 break
         return lst_type, d
 
-    def research_fonc_name(self, text_encode, name_fonction, add_parmeter_str, anser):
+    def research_fonc_name(self,
+                           text_encode,
+                           name_fonction,
+                           add_parmeter_str,
+                           anser):
         fonction_name = []
         end = False
         while not end:
-            text_encode, fonction_name, best_id = self.take_best(text_encode, fonction_name, name_fonction)
+            (text_encode,
+             fonction_name,
+             best_id) = self.take_best(text_encode,
+                                       fonction_name,
+                                       name_fonction)
             if not self.is_sublist(name_fonction, fonction_name):
                 end = True
         text_encode.pop()
@@ -129,7 +153,8 @@ class Model(BaseModel):
             vocab = json.load(f)
         ids_autorises = []
         for token_text, token_id in vocab.items():
-            token_clean = token_text.replace("Ġ", " ").replace("▁", " ").lower()
+            token_clean = token_text.replace("Ġ", " ").replace("▁",
+                                                               " ").lower()
             if token_clean and all(c in key_str for c in token_clean):
                 ids_autorises.append(token_id)
         return ids_autorises
