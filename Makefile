@@ -3,6 +3,7 @@ V_PYTHON		= $(UV) run python
 V_PIP			= $(UV) pip
 MAIN			= src/__main__.py
 VENV			= .venv
+SRC 			= src
 
 MYPY_FLAGS		= --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 DEPENDENCIES	= pytest flake8 mypy pydantic
@@ -26,18 +27,16 @@ debug: install
 	$(V_PYTHON) -m pdb $(MAIN)
 
 clean:
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type d -name ".mypy_cache" -exec rm -rf {} +
-	rm -rf .mypy_cache .pytest_cache
 	rm -rf $(VENV)
+	rm -rf .mypy_cache .pytest_cache
 	rm -rf data/output/
 
 lint: install
-	$(FLAKE) . --exclude '$(VENV)'
-	$(MYPY) $(MYPY_FLAGS) src
+	$(FLAKE) $(SRC)
+	$(MYPY) $(MYPY_FLAGS) $(SRC)
 
 lint-strict: install
-	$(FLAKE) . --exclude '$(VENV)'
-	$(MYPY) $(MYPY_FLAGS) --strict src
+	$(FLAKE) '$(SRC)'
+	$(MYPY) $(MYPY_FLAGS) --strict '$(SRC)'
 
 .PHONY: install run debug clean lint lint-strict

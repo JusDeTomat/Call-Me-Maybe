@@ -1,12 +1,25 @@
 import sys
 import json
 from src.error_type import ErrorJson, ErrorParsing
+from typing import Any, List
 
 
-def open_json_files(name_file):
+def open_json_files(name_file: str) -> list[Any]:
+    """Open and load a JSON file, returning its data as a list.
+
+    Args:
+        name_file: Path to the JSON file.
+
+    Returns:
+        The loaded data as a list.
+
+    Raises:
+        ErrorJson: If the file is not found, permission is denied,
+        or JSON is invalid.
+    """
     try:
         with open(name_file, "r") as json_file:
-            data = json.load(json_file)
+            data: list[Any] = json.load(json_file)
         if not len(data):
             raise ErrorJson('JSON is empty')
         return data
@@ -18,52 +31,61 @@ def open_json_files(name_file):
         raise ErrorJson(f"[ERROR JSON]: {e} in {name_file}")
 
 
-def parsing():
+def parsing() -> tuple[List[Any], List[Any], str]:
+    """Parse command-line arguments and load JSON data for prompts and
+    functions.
+
+    Returns:
+        Tuple containing prompt data, function data, and output file path.
+
+    Raises:
+        ErrorParsing: If arguments are invalid or files cannot be loaded.
+    """
     try:
         arg = sys.argv
-        parm_lst = ['--functions_definition', '--input', '--output']
-        funct = None
-        prompt = None
-        output = None
+        option_names = ['--functions_definition', '--input', '--output']
+        functions_path: str | None = None
+        prompt_path: str | None = None
+        output: str | None = None
         if len(arg) == 1:
-            dico_promt = open_json_files(
+            prompt_data = open_json_files(
                 "data/input/function_calling_tests.json"
             )
-            dico_func = open_json_files(
+            function_data = open_json_files(
                 "data/input/functions_definition.json"
             )
         else:
             arg.pop(0)
             for i in range(len(arg)):
-                if ((arg[i] not in parm_lst and
+                if ((arg[i] not in option_names and
                      i != 0 and
-                     arg[i - 1] not in parm_lst) or (
-                     arg[i] not in parm_lst and
+                     arg[i - 1] not in option_names) or (
+                     arg[i] not in option_names and
                      i == 0)):
                     raise ErrorParsing(f'{arg[i]} is not a good arguments')
                 if (len(arg) % 2 != 0):
                     raise ErrorParsing("bad argument implementation. "
-                                       "Exemple: --input <path>")
+                                       "Example: --input <path>")
                 if arg[i] == '--functions_definition':
                     if (i + 1 < len(arg)):
-                        funct = arg[i + 1]
+                        functions_path = arg[i + 1]
                 if arg[i] == '--input':
                     if (i + 1 < len(arg)):
-                        prompt = arg[i + 1]
+                        prompt_path = arg[i + 1]
                 if arg[i] == '--output':
                     if (i + 1 < len(arg)):
                         output = arg[i + 1]
-            if prompt is None:
-                prompt = "data/input/function_calling_tests.json"
-            if funct is None:
-                funct = "data/input/functions_definition.json"
-            dico_promt = open_json_files(prompt)
-            dico_func = open_json_files(funct)
+            if prompt_path is None:
+                prompt_path = "data/input/function_calling_tests.json"
+            if functions_path is None:
+                functions_path = "data/input/functions_definition.json"
+            prompt_data = open_json_files(prompt_path)
+            function_data = open_json_files(functions_path)
         if output is None:
             output = "data/output/function_calling_results.json"
         if output.split(".")[-1] != "json":
             raise ErrorParsing("output file need .json not ."
                                f"{output.split('.')[-1]}")
-        return (dico_promt, dico_func, output)
+        return (prompt_data, function_data, output)
     except Exception as e:
         raise ErrorParsing(f"[ERROR]: {e}")
