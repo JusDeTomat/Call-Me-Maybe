@@ -3,7 +3,7 @@ import time
 from typing import Any, Dict, List, Tuple
 import numpy as np
 import json
-from src.enum import Prompt
+from src.enum_pormpt import Prompt
 from src.parsing import parsing
 from src.output import write_output
 from llm_sdk import Small_LLM_Model

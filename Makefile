@@ -27,6 +27,8 @@ debug: install
 	$(V_PYTHON) -m pdb $(MAIN)
 
 clean:
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	find . -type d -name ".mypy_cache" -exec rm -rf {} +
 	rm -rf $(VENV)
 	rm -rf .mypy_cache .pytest_cache
 	rm -rf data/output/
