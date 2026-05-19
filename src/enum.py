@@ -2,7 +2,8 @@ from enum import Enum
 
 
 class Prompt(Enum):
-    LOGO = ("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    LOGO = ("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n "
+            "\n\n\n\n\n\n\n\n\n\n"
             "\033[34m              _  _                                       "
             "       _\033[0m\n"
             "\033[34m             | || |                                      "

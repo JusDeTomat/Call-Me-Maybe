@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 import time
 from typing import Any
 import numpy as np
@@ -37,10 +37,12 @@ class Model(BaseModel):
 
     def constrained_decoding(self, dico_promt, dico_fonction):
         self.lst_output = []
+        all_type = []
         lst_type = []
-        ids_number = self.create_autoris_key(set(",0123456789"))
+        ids_number = self.create_autoris_key(set(",.0123456789"))
         ids_string = self.create_autoris_key(
-            set(",0123456789abcdefghijklmnopqrstuvwxyz "))
+            set(".,0123456789abcdefghijklmnopqrstuvwxyz "
+                "/-*"))
         name_fonction = self.model.encode(
             "".join(d.get("name") for d in dico_fonction)
         )[0].tolist()
@@ -49,7 +51,7 @@ class Model(BaseModel):
         for prom in dico_promt:
             i += 1
             text_encode = self.model.encode(
-                f"Select the function from {dico_fonction} to answer "
+                f"function seloctor fonction={dico_fonction} to answer "
                 "the input\n"
                 f"input: {prom.get('prompt')}\n"
                 "output format: function:<function_name>\n"
@@ -66,49 +68,63 @@ class Model(BaseModel):
             (lst_type,
              dico_fonction_chose) = self.take_parm_fonction(fonction_name_dec,
                                                             dico_fonction)
+            all_type.append(lst_type)
             text_encode_parm = self.model.encode(
-                f"This function {dico_fonction_chose} completes the parameters"
-                " by responding to the input, your answer must be only the "
-                "output line\n"
+                f"function={dico_fonction_chose} parameters={lst_type}"
+                "Extract full intact parameters from input\n"
                 f"input: {prom.get('prompt')}\n"
                 "output: parameters: <name>:<value>,\n"
                 "parameters:"
             )[0].tolist()
             print(
                 f"{Prompt.LOGO.value}\n"
-                f"{i}/{len(dico_promt)}prompt\n"
+                f"{i}/{len(dico_promt)} prompt\n"
                 f"---> prompt: {prom.get('prompt')}\n"
                 f"---> function name: {fonction_name_dec}:\n"
                 "---> parameter: ", end=""
             )
-            for name_parm, type_parm in lst_type:
-                end = False
-                token = 0
-                for element in self.model.encode(f" {name_parm}:")[0].tolist():
-                    text_encode_parm.append(element)
-                    anser.append(element)
-                    print(self.model.decode(element), end="")
-                while (not end) and token <= 20:
-                    if type_parm == "number":
-                        (text_encode_parm,
-                         anser,
-                         best_id) = self.take_best(text_encode_parm,
-                                                   anser,
-                                                   ids_number)
-                    if type_parm == "string":
-                        (text_encode_parm,
-                         anser,
-                         best_id) = self.take_best(text_encode_parm,
-                                                   anser,
-                                                   ids_string)
-                    best_id_str = self.model.decode(best_id)
-                    print(best_id_str, end="", flush=True)
-                    if ',' in best_id_str:
-                        end = True
-                    token += 1
-            print()
-            decode_anser = self.model.decode(anser)
-            self.lst_output.append([prom.get('prompt'), decode_anser])
+            self.research_parm(lst_type,
+                               text_encode_parm,
+                               anser,
+                               ids_number,
+                               ids_string,
+                               prom)
+        return all_type
+
+    def research_parm(self, lst_type,
+                      text_encode_parm,
+                      anser,
+                      ids_number,
+                      ids_string,
+                      prom):
+        for name_parm, type_parm in lst_type:
+            end = False
+            token = 0
+            for element in self.model.encode(f" {name_parm}:")[0].tolist():
+                text_encode_parm.append(element)
+                anser.append(element)
+                print(self.model.decode(element), end="")
+            while (not end) and token <= 15:
+                if type_parm == "number" or type_parm == "integer":
+                    (text_encode_parm,
+                        anser,
+                        best_id) = self.take_best(text_encode_parm,
+                                                  anser,
+                                                  ids_number)
+                else:
+                    (text_encode_parm,
+                        anser,
+                        best_id) = self.take_best(text_encode_parm,
+                                                  anser,
+                                                  ids_string)
+                best_id_str = self.model.decode(best_id)
+                print(best_id_str, end="", flush=True)
+                if ',' in best_id_str:
+                    end = True
+                token += 1
+        print()
+        decode_anser = self.model.decode(anser)
+        self.lst_output.append([prom.get('prompt'), decode_anser])
 
     @staticmethod
     def take_parm_fonction(function_name, dico_fonction):
@@ -161,13 +177,21 @@ class Model(BaseModel):
 
 
 def main():
-    debut = time.time()
-    model = Model(model=Small_LLM_Model(), logits=[], lst_output=[])
-    pars = parsing()
-    model.constrained_decoding(pars[0], pars[1])
-    write_output(model.lst_output)
-    fin = time.time()
-    print("Temps final:", fin - debut, "secondes")
+    try:
+        start = time.time()
+        model = Model(model=Small_LLM_Model(), logits=[], lst_output=[])
+        pars = parsing()
+        type_parm = model.constrained_decoding(pars[0], pars[1])
+        write_output(model.lst_output, pars[2], type_parm)
+        end = time.time()
+        print("Temps final:", end - start, "secondes")
+    except ValidationError:
+        print("You have a wrong parameter in your Model(class) implementation")
+    except Exception as e:
+        print(e)
+        # raise Exception(e)
+    except BaseException:
+        print("\nyou kill the programe")
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ MAIN			= src/__main__.py
 VENV			= .venv
 
 MYPY_FLAGS		= --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
-DEPENDENCIES	= pytest flake8 mypy
+DEPENDENCIES	= pytest flake8 mypy pydantic
 FLAKE			= $(V_PYTHON) -m flake8
 MYPY			= $(V_PYTHON) -m mypy
 
@@ -30,7 +30,6 @@ clean:
 	find . -type d -name ".mypy_cache" -exec rm -rf {} +
 	rm -rf .mypy_cache .pytest_cache
 	rm -rf $(VENV)
-	rm -rf uv.lock
 	rm -rf data/output/
 
 lint: install

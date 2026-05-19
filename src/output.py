@@ -1,10 +1,11 @@
 import os
+from src.error_type import ErrorOutput
 
 
 def parsing_promt(promt):
     pars_promt = ""
     for letre in promt:
-        if letre == "\"":
+        if letre == "\"" or letre == "\\":
             pars_promt += "\\" + letre
         else:
             pars_promt += letre
@@ -28,13 +29,13 @@ def parsing_llm_anser(output):
                 lst_var.append((var_split[0].strip(), var_split[1].strip()))
         dico['var'] = lst_var
     except Exception as e:
-        raise ValueError(e)
+        raise ErrorOutput(e)
     return (dico)
 
 
-def write_output(lst):
+def write_output(lst, name_file, type_parm):
     os.makedirs("data/output", exist_ok=True)
-    with open("data/output/function_calling_results.json", 'w') as output:
+    with open(name_file, 'w') as output:
         output.write("[\n")
         j = 0
         for promt, llm_output in lst:
@@ -50,7 +51,12 @@ def write_output(lst):
                 for key, value in dico_llm['var']:
                     i += 1
                     try:
-                        value = float(value)
+                        if type_parm[j - 1][i - 1][1] == "number":
+                            value = float(value)
+                        elif type_parm[j - 1][i - 1][1] == "integer":
+                            value = int(value)
+                        else:
+                            raise Exception()
                         output.write(f"\"{key}\": {value}")
                     except Exception:
                         output.write(f"\"{key}\": \"{value}\"")
@@ -61,8 +67,7 @@ def write_output(lst):
                 if j != len(lst):
                     output.write(",")
                 output.write("\n")
-            except ValueError as e:
-                print(e)
+            except ErrorOutput:
                 output.write("\t{\n")
                 output.write(f"\t\t\"prompt\": \"{promt}\"\n")
                 output.write("\t}")
