@@ -103,10 +103,10 @@ class Model(BaseModel):
             text_encode = self.model.encode(
                 f"function selector function={function_data} to answer "
                 "the input\n"
-                f"input: {prompt_entry.get('prompt')}\n"
+                f"input: {prompt_entry.get('prompt', '')}\n"
                 "output format: function:<function_name>\n"
                 "function: "
-            )[0].tolist()
+                )[0].tolist()
             answer = self.model.encode("function: ")[0].tolist()
             (answer,
              text_encode,
@@ -126,14 +126,14 @@ class Model(BaseModel):
             text_encode_params = self.model.encode(
                 f"function={chosen_function_data} parameters={lst_type}"
                 "Extract full intact parameters from input\n"
-                f"input: {prompt_entry.get('prompt')}\n"
+                f"input: {prompt_entry.get('prompt', '')}\n"
                 "output: parameters: <name>:<value>,\n"
                 "parameters:"
             )[0].tolist()
             print(
                 f"{Prompt.LOGO.value}\n"
                 f"{i}/{len(prompt_data)} prompt\n"
-                f"---> prompt: {prompt_entry.get('prompt')}\n"
+                f"---> prompt: {prompt_entry.get('prompt', "")}\n"
                 f"---> function name: {function_name_decoded}:\n"
                 "---> parameter: ", end=""
             )
@@ -194,7 +194,8 @@ class Model(BaseModel):
                 token += 1
         print()
         decoded_answer = self.model.decode(answer)
-        self.lst_output.append([prompt_entry.get('prompt'), decoded_answer])
+        self.lst_output.append([prompt_entry.get('prompt', ""),
+                                decoded_answer])
 
     @staticmethod
     def get_function_parameters(

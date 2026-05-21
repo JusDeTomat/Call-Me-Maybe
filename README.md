@@ -54,7 +54,7 @@ python -m src --functions_definition data/input/functions_definition.json --inpu
 
 ### AI usage
 
-AI assistance was used to help summarize the project structure, explain the constrained decoding approach, and generate the README content. The core implementation remains based on the repository code and manual design choices.
+AI was used to explain the constrained decoding approach, and generate the README content.
 
 ## Algorithm explanation
 
@@ -120,4 +120,3 @@ Expected output is a JSON file in `data/output` containing prompt, function name
 ## Notes
 
 - If the output file path does not end with `.json`, the program raises a parsing error.
-- The implementation currently assumes the model returns a function-style answer that includes `function:` and `parameters:` sections.
