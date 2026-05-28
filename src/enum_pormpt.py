@@ -20,3 +20,15 @@ class Prompt(Enum):
             " __/ |\033[0m\n"
             "\033[34m                                                         "
             "|___/\033[0m\n")
+    EXEMPLE_PROM = ("Exemple:\n[\n\t{\n\t\t\"prompt\": \"What is the sum of 2 "
+                    "and 3?\"\n"
+                    "\t},\n\t{\n\t\t\"prompt\": \"What is the sum of 265 and "
+                    "345?\""
+                    "\n\t}\n]")
+    EXEMPLE_FUNC = ("Exemple:\n[\n\t{\n\t\t\"name\": \"fn_add_numbers\",\n\t\t"
+                    "\"description\": \"Add two numbers together and return "
+                    "their sum.\",\n\t\t\"parameters\": {\n\t\t\t\"a\": {\n\t"
+                    "\t\t\t\"type\": \"number\"\n\t\t\t},\n\t\t\t\"b\": {\n\t"
+                    "\t\t\t\"type\": \"number\"\n\t\t\t}\n\t\t},\n\t\t\""
+                    "returns\""
+                    ": {\n\t\t\t\"type\": \"number\"\n\t\t}\n\t}\n]")

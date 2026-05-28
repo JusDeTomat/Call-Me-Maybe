@@ -6,7 +6,7 @@
       "a": {
         "type": "number"
       },
-      "b": template
+      "b": "template"
     },
     "returns": {
       "type": "number"

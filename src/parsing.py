@@ -2,6 +2,7 @@ import sys
 import json
 from src.error_type import ErrorJson, ErrorParsing
 from typing import Any, List
+from src.enum_pormpt import Prompt
 
 
 def open_json_files(name_file: str) -> list[Any]:
@@ -31,6 +32,29 @@ def open_json_files(name_file: str) -> list[Any]:
         raise ErrorJson(f"[ERROR JSON]: {e} in {name_file}")
 
 
+def check_data(data, name_file, utils):
+    for element in data:
+        if utils:
+            if not all(k in element for k in ['name', 'description', 'parameters']):
+                raise ErrorJson(
+                    f"File {name_file} is wrong\n"
+                    f"{Prompt.EXEMPLE_FUNC.value}"
+                )
+            keys = list(element.get('parameters').keys())
+            for key in keys:
+                if not isinstance(element.get('parameters')[key], dict):
+                    raise ErrorJson(
+                        f"File {name_file} is wrong\n"
+                        f"{Prompt.EXEMPLE_FUNC.value}"
+                    )
+        else:
+            if 'prompt' not in element:
+                raise ErrorJson(
+                    f"File {name_file} is wrong\n"
+                    f"{Prompt.EXEMPLE_PROM.value}"
+                )
+
+
 def parsing() -> tuple[List[Any], List[Any], str]:
     """Parse command-line arguments and load JSON data for prompts and
     functions.
@@ -51,9 +75,11 @@ def parsing() -> tuple[List[Any], List[Any], str]:
             prompt_data = open_json_files(
                 "data/input/function_calling_tests.json"
             )
+            check_data(prompt_data, "data/input/function_calling_tests.json", 0)
             function_data = open_json_files(
                 "data/input/functions_definition.json"
             )
+            check_data(function_data, "data/input/functions_definition.json", 1)
         else:
             arg.pop(0)
             for i in range(len(arg)):
@@ -80,7 +106,9 @@ def parsing() -> tuple[List[Any], List[Any], str]:
             if functions_path is None:
                 functions_path = "data/input/functions_definition.json"
             prompt_data = open_json_files(prompt_path)
+            check_data(prompt_data, prompt_path, 0)
             function_data = open_json_files(functions_path)
+            check_data(function_data, functions_path, 1)
         if output is None:
             output = "data/output/function_calling_results.json"
         if output.split(".")[-1] != "json":
